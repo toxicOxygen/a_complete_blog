@@ -4,6 +4,7 @@ from .models import Post,Comment
 from taggit.models import Tag
 from .forms import EmailPostForm,CommentForm
 from django.core.mail import send_mail
+from django.db.models import Count
 
 # Create your views here.
 class PostListView(ListView):
@@ -28,20 +29,30 @@ class PostListView(ListView):
 class PostDetailView(View):
     def get(self,*args,**kwargs):
         p = get_object_or_404(Post,slug=kwargs.get('slug'))
+        post_tags_ids = p.tags.values_list('id',flat=True)
+        similar_posts = Post.objects.filter(tags__in=post_tags_ids).exclude(id=p.id)
+        similar_posts = similar_posts.annotate(same_tags=Count('tags')).order_by('-same_tags','-publish')[:4]
         context = {
            'post':p,
            'comments':p.comments.filter(active=True),
-           'form': CommentForm()
+           'form': CommentForm(),
+           'similar_posts':similar_posts
         }
+        print(similar_posts)
         return render(self.request,'blog/post-detail.html',context=context)
     
     def post(self,*args,**kwargs):
         form = CommentForm(self.request.POST or None)
         p = get_object_or_404(Post,slug=kwargs.get('slug'))
+        post_tags_ids = p.tags.values_list('id',flat=True)
+        similar_posts = Post.objects.filter(tags__in=post_tags_ids).exclude(id=p.id)
+        similar_posts = similar_posts.annotate(same_tags=Count('tags')).order_by('-same_tags','-publish')[:4]
+        
         context = {
            'post':p,
            'comments':p.comments.filter(active=True),
-           'form':CommentForm()
+           'form':CommentForm(),
+           'similar_posts':similar_posts
         }
         if form.is_valid():
             n_form = form.save(commit=False)

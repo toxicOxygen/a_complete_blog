@@ -60,6 +60,16 @@
     </p>
 </div>
 
+
+<h2>Similar posts</h2>
+{% for post in similar_posts %}
+<p>
+    <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+</p>
+{% empty %}
+There are no similar posts yet. 
+{% endfor %}
+
 <!--comment-->
 {% with comments.count as total_count %}
     <h3>{{total_count}} Comment{{total_count|pluralize}}</h3>
@@ -136,7 +146,7 @@
                                 </div>
 
                                 <div class="text-center">
-                                    <input type="submit" value="Enviar" class="btn btn-info btn-block rounded-0 py-2">
+                                    <input type="submit" value="comment" class="btn btn-info btn-block rounded-0 py-2">
                                 </div>
                             </div>
 
