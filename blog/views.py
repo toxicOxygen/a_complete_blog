@@ -1,6 +1,7 @@
 from django.shortcuts import render,get_object_or_404
 from django.views.generic import ListView,View
 from .models import Post,Comment
+from taggit.models import Tag
 from .forms import EmailPostForm,CommentForm
 from django.core.mail import send_mail
 
@@ -10,6 +11,19 @@ class PostListView(ListView):
     template_name = 'blog/home.html'
     context_object_name = 'posts'
     paginate_by = 3
+
+    def get_queryset(self):
+        if self.kwargs.get('tag',False):
+            tag = get_object_or_404(Tag,slug=self.kwargs['tag'])
+            return Post.objects.filter(tags__in=[tag])
+        return Post.objects.all()
+    
+    def get_context_data(self,**kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.kwargs.get('tag',False):
+            tag = get_object_or_404(Tag,slug=self.kwargs['tag'])
+            context['tag'] = tag
+        return context
 
 class PostDetailView(View):
     def get(self,*args,**kwargs):
@@ -51,3 +65,4 @@ class SharePostView(View):
             message = 'Read "{}" at {}\n\n{}\'s comments: {}'.format(p.title, post_url, cd['name'], cd['comments'])
             send_mail(subject,message,'kingstugi@devs.com',[cd['to']])
         return render(self.request,'blog/share.html')
+
